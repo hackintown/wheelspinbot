@@ -22,6 +22,23 @@ const getTelegramWebApp = () => {
   return null;
 };
 
+const verifyChannelMembership = async (userId: string) => {
+  try {
+    const response = await fetch(`/api/verify-membership`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId }),
+    });
+    const data = await response.json();
+    return data.isMember;
+  } catch (error) {
+    console.error("Error verifying membership:", error);
+    return false;
+  }
+};
+
 export default function Home() {
   const [hasJoinedChannel, setHasJoinedChannel] = useState(false);
   const [spinsLeft, setSpinsLeft] = useState(3);

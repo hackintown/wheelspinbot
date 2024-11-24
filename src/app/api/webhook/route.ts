@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     // Handle different bot commands here
     if (body.message?.text === "/start") {
       // Send mini web app keyboard
-      const webAppUrl = `https://your-domain.com`;
+      const webAppUrl = `https://wheelspinbot.vercel.app`;
 
       await fetch(
         `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`,
