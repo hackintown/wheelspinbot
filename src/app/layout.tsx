@@ -25,8 +25,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script 
+          src="https://telegram.org/js/telegram-web-app.js"
+          async
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{
+          '--tg-viewport-height': '100vh',
+          '--tg-viewport-stable-height': '100vh'
+        } as React.CSSProperties}
       >
         {children}
       </body>
