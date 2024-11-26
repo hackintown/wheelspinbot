@@ -62,7 +62,7 @@ export default function Home() {
     }
 
     try {
-      await tgWebApp.openTelegramLink("https://t.me/yourchannel");
+      await tgWebApp.openTelegramLink("https://t.me/hackintown");
       setHasJoinedChannel(true);
     } catch (error) {
       console.error("Error joining channel:", error);

@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from 'next/navigation';
 
 const JoinChannel: React.FC = () => {
+  const router = useRouter();
   const [hasJoined, setHasJoined] = useState(false);
 
   const handleJoinClick = () => {
@@ -11,7 +13,7 @@ const JoinChannel: React.FC = () => {
   };
 
   const handleContinue = () => {
-    window.location.href = "/wheel-spin"; // Navigate to spin page
+    router.push('/wheel-spin');
   };
 
   return (

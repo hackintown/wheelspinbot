@@ -6,19 +6,30 @@ const WheelSpin: React.FC = () => {
   const [spinsLeft, setSpinsLeft] = useState(3);
   const [reward, setReward] = useState<number | null>(null);
 
+  const getTelegramUserId = () => {
+    if (typeof window !== 'undefined') {
+      return (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id;
+    }
+    return null;
+  };
+
   const handleSpin = async () => {
-    if (spinsLeft > 0) {
-      const response = await fetch("/api/spins", {
-        method: "POST",
-        body: JSON.stringify({ userId: "example-user" }), // Replace with Telegram user ID
-      });
-      const data = await response.json();
-      if (data.success) {
-        setReward(data.reward);
-        setSpinsLeft((prev) => prev - 1);
-      } else {
-        alert(data.message);
-      }
+    const userId = getTelegramUserId();
+    if (!userId) {
+      alert('User ID not found');
+      return;
+    }
+    
+    const response = await fetch("/api/spins", {
+      method: "POST",
+      body: JSON.stringify({ userId }),
+    });
+    const data = await response.json();
+    if (data.success) {
+      setReward(data.reward);
+      setSpinsLeft((prev) => prev - 1);
+    } else {
+      alert(data.message);
     }
   };
 

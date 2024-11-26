@@ -1,27 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
+import { connectToDatabase } from "@/lib/mongodb";
+import { User } from "@/models/User";
 
 type SpinResult = { success: boolean; reward: number | null; message: string };
 
-const userSpins: Record<string, number> = {}; // Replace with a database in production
-
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const { userId } = await req.json();
+  try {
+    const { userId } = await req.json();
+    await connectToDatabase();
+    
+    const user = await User.findOne({ telegramId: userId });
+    if (!user || user.spinsLeft <= 0) {
+      return NextResponse.json<SpinResult>({
+        success: false,
+        reward: null,
+        message: "No spins left.",
+      });
+    }
 
-  if (!userSpins[userId]) userSpins[userId] = 3;
+    const reward = Math.floor(Math.random() * 51);
+    await User.findOneAndUpdate(
+      { telegramId: userId },
+      { 
+        $inc: { 
+          spinsLeft: -1,
+          totalEarnings: reward 
+        }
+      }
+    );
 
-  if (userSpins[userId] > 0) {
-    userSpins[userId]--;
-    const reward = Math.floor(Math.random() * 51); // Random reward up to ₹50
     return NextResponse.json<SpinResult>({
       success: true,
       reward,
       message: "Spin successful!",
     });
+  } catch (error) {
+    return NextResponse.json<SpinResult>({
+      success: false,
+      reward: null,
+      message: "Server error",
+    }, { status: 500 });
   }
-
-  return NextResponse.json<SpinResult>({
-    success: false,
-    reward: null,
-    message: "No spins left.",
-  });
 }
