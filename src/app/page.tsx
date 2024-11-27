@@ -1,50 +1,46 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
-import Welcome from '@/components/Welcome';
 
-export default function Home() {
+interface TelegramWebApp {
+  ready: () => void;
+  expand: () => void;
+  openTelegramLink: (url: string) => Promise<void>;
+  initDataUnsafe?: {
+    user?: {
+      id: string;
+    };
+  };
+}
+
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: TelegramWebApp;
+    };
+  }
+}
+
+export default function JoinChannelPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasJoinedChannel, setHasJoinedChannel] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasJoinedChannel, setHasJoinedChannel] = useState<boolean | null>(null);
   const [isTelegramAvailable, setIsTelegramAvailable] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    // Check if Telegram WebApp is available
+    if (window.Telegram?.WebApp) {
+      setIsTelegramAvailable(true);
+      // Check initial membership status
+      checkMembership();
+    }
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-    
-    const initTelegram = async () => {
-      try {
-        if (window.Telegram?.WebApp) {
-          window.Telegram.WebApp.ready();
-          window.Telegram.WebApp.expand();
-          setIsTelegramAvailable(true);
-          setIsLoading(false);
-          await checkMembership();
-        } else {
-          setIsLoading(false);
-          router.push('/join-channel');
-        }
-      } catch (error) {
-        console.error('Telegram initialization error:', error);
-        setIsLoading(false);
-      }
-    };
-
-    initTelegram();
-  }, [mounted]);
-
-  if (!mounted) {
-    return null;
-  }
-
   const checkMembership = async () => {
-    if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+    const userId = window.Telegram?.WebApp.initDataUnsafe?.user?.id;
+    if (!userId) {
+      console.error('User ID not found');
       return;
     }
 
@@ -54,14 +50,14 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          userId: window.Telegram.WebApp.initDataUnsafe.user.id 
-        }),
+        body: JSON.stringify({ userId }),
       });
       const data = await response.json();
       setHasJoinedChannel(data.isMember);
+      return data.isMember;
     } catch (error) {
-      console.error('Error checking membership:', error);
+      console.error('Error verifying membership:', error);
+      return false;
     }
   };
 
@@ -73,62 +69,49 @@ export default function Home() {
 
     setIsLoading(true);
     try {
+      // Open Telegram channel link
       await window.Telegram.WebApp.openTelegramLink('https://t.me/hackintown');
+      // Wait for user to potentially join
       await new Promise(resolve => setTimeout(resolve, 2000));
-      await checkMembership();
-      
-      if (hasJoinedChannel) {
+      // Check if user has joined
+      const isMember = await checkMembership();
+      if (isMember) {
         router.push('/wheel-spin');
-      } else {
-        alert('Please join the channel to continue');
       }
     } catch (error) {
       console.error("Error joining channel:", error);
-      alert('Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-purple-600 to-blue-600">
-        <div className="bg-white rounded-2xl p-8 text-center max-w-md w-full shadow-xl">
-          <h2 className="text-xl font-semibold mb-4">Loading...</h2>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!hasJoinedChannel) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-purple-600 to-blue-600">
-        <div className="bg-white rounded-2xl p-8 text-center max-w-md w-full shadow-xl">
-          <h1 className="text-2xl font-bold mb-4">🎉 Welcome to Spin & Win!</h1>
-          <p className="mb-6">Join our channel and get 3 FREE spins!</p>
-          {!isTelegramAvailable && (
-            <p className="text-sm text-gray-500 mb-4">
-              Loading Telegram WebApp...
-            </p>
-          )}
-          <button
-            onClick={handleJoinChannel}
-            disabled={isLoading || !isTelegramAvailable}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full
-                     transition-all duration-300 transform hover:scale-105 disabled:opacity-50"
-          >
-            {isLoading ? 'Verifying...' : 'Join Channel'}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-purple-600 via-blue-500 to-purple-600">
-      <Welcome onStart={() => router.push('/wheel-spin')} />
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-purple-600 to-blue-600">
+      <div className="bg-white rounded-2xl p-8 text-center max-w-md w-full shadow-xl">
+        <h1 className="text-2xl font-bold mb-4">🎉 Welcome to Spin & Win!</h1>
+        <p className="mb-6">Join our channel and get 3 FREE spins!</p>
+        
+        {!isTelegramAvailable && (
+          <p className="text-sm text-gray-500 mb-4">
+            Loading Telegram WebApp...
+          </p>
+        )}
+
+        <button
+          onClick={hasJoinedChannel ? () => router.push('/wheel-spin') : handleJoinChannel}
+          disabled={isLoading || !isTelegramAvailable}
+          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full
+                   transition-all duration-300 transform hover:scale-105 disabled:opacity-50"
+        >
+          {isLoading ? 'Verifying...' : hasJoinedChannel ? 'Continue' : 'Join Channel'}
+        </button>
+
+        {hasJoinedChannel === false && (
+          <p className="mt-4 text-sm text-red-500">
+            Please join the channel to continue
+          </p>
+        )}
+      </div>
     </div>
   );
 }
