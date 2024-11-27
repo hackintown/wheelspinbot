@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import confetti from "canvas-confetti";
+import { useState } from "react";
+import dynamic from 'next/dynamic';
 import { FaSpinner, FaGift } from "react-icons/fa";
+import { GAME_CONFIG } from '@/config/constants';
 
 interface SpinWheelProps {
   onSpinComplete: (amount: number) => void;
@@ -10,8 +11,12 @@ interface SpinWheelProps {
   spinsLeft: number;
 }
 
-const prizes = [10, 20, 30, 40, 50, 60, 70, 80];
-const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEEAD", "#D4A5A5", "#9B59B6", "#3498DB"];
+const prizes = GAME_CONFIG.REWARDS;
+const colors = GAME_CONFIG.COLORS;
+
+const confetti = dynamic(() => import('canvas-confetti'), {
+  ssr: false
+}) as any;
 
 export default function SpinWheel({ onSpinComplete, disabled, spinsLeft }: SpinWheelProps) {
   const [spinning, setSpinning] = useState(false);
@@ -29,12 +34,17 @@ export default function SpinWheel({ onSpinComplete, disabled, spinsLeft }: SpinW
 
     setTimeout(() => {
       setSpinning(false);
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#FFD700', '#FFA500', '#FF4500']
-      });
+      const triggerConfetti = () => {
+        if (typeof window !== 'undefined') {
+          confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#FFD700', '#FFA500', '#FF4500']
+          });
+        }
+      };
+      triggerConfetti();
       onSpinComplete(randomPrize);
     }, 5000);
   };

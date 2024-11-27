@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { User } from "@/models/User";
+import { rateLimit } from "@/lib/rate-limit";
 
 type SpinResult = { success: boolean; reward: number | null; message: string };
 
+const limiter = rateLimit({
+  interval: 60 * 1000, // 1 minute
+  uniqueTokenPerInterval: 500
+});
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
+    await limiter.check(req, 10); // 10 requests per minute
     const { userId } = await req.json();
     await connectToDatabase();
     
@@ -34,7 +41,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       reward,
       message: "Spin successful!",
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Rate limit exceeded') {
+      return NextResponse.json<SpinResult>({
+        success: false,
+        reward: null,
+        message: "Too many requests. Please try again later.",
+      }, { status: 429 });
+    }
     return NextResponse.json<SpinResult>({
       success: false,
       reward: null,

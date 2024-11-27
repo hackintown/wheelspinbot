@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
+import Welcome from '@/components/Welcome';
 
 export default function Home() {
   const router = useRouter();
@@ -10,43 +11,39 @@ export default function Home() {
   const [spinsLeft, setSpinsLeft] = useState(3);
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [isTelegramAvailable, setIsTelegramAvailable] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
+    setMounted(true);
+  }, []);
 
+  useEffect(() => {
+    if (!mounted) return;
+    
     const initTelegram = async () => {
-      if (!mounted) return;
-
       try {
         if (window.Telegram?.WebApp) {
           window.Telegram.WebApp.ready();
           window.Telegram.WebApp.expand();
-          
-          if (mounted) {
-            setIsTelegramAvailable(true);
-            setIsLoading(false);
-            await checkMembership();
-          }
+          setIsTelegramAvailable(true);
+          setIsLoading(false);
+          await checkMembership();
         } else {
-          if (mounted) {
-            setIsLoading(false);
-            router.push('/join-channel');
-          }
+          setIsLoading(false);
+          router.push('/join-channel');
         }
       } catch (error) {
         console.error('Telegram initialization error:', error);
-        if (mounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
-    setTimeout(initTelegram, 100);
+    initTelegram();
+  }, [mounted]);
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  if (!mounted) {
+    return null;
+  }
 
   const checkMembership = async () => {
     if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
@@ -136,8 +133,8 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      {/* Your existing render logic here */}
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-purple-600 via-blue-500 to-purple-600">
+      <Welcome onStart={() => router.push('/wheel-spin')} />
     </div>
   );
 }
