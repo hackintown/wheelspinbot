@@ -9,6 +9,7 @@ export const GAME_CONFIG = {
 
 export const TELEGRAM_CONFIG = {
   CHANNEL_USERNAME: 'hackintown',
+  CHANNEL_ID: process.env.TELEGRAM_CHANNEL_ID || '@hackintown',
   CHANNEL_LINK: 'https://t.me/hackintown',
   BOT_COMMANDS: {
     START: '/start',
