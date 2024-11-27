@@ -29,19 +29,67 @@ export default function JoinChannelPage() {
   const [isTelegramAvailable, setIsTelegramAvailable] = useState(false);
 
   useEffect(() => {
-    // Check if Telegram WebApp is available
-    if (window.Telegram?.WebApp) {
-      setIsTelegramAvailable(true);
-      // Check initial membership status
-      checkMembership();
-    }
+    let mounted = true;
+    let initAttempts = 0;
+    const MAX_ATTEMPTS = 10;
+
+    const initializeTelegramWebApp = async () => {
+      if (!mounted) return;
+      
+      console.log('Initialization attempt:', initAttempts + 1);
+      console.log('Current WebApp state:', {
+        telegram: !!window.Telegram,
+        webApp: !!window.Telegram?.WebApp,
+        initData: !!window.Telegram?.WebApp?.initDataUnsafe,
+        user: window.Telegram?.WebApp?.initDataUnsafe?.user
+      });
+
+      if (window.Telegram?.WebApp) {
+        try {
+          window.Telegram.WebApp.ready();
+          window.Telegram.WebApp.expand();
+          setIsTelegramAvailable(true);
+
+          // Wait a bit before checking membership
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
+          if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+            await checkMembership();
+          } else if (initAttempts < MAX_ATTEMPTS) {
+            initAttempts++;
+            setTimeout(initializeTelegramWebApp, 500);
+          } else {
+            console.error('Failed to get user data after maximum attempts');
+            setIsTelegramAvailable(false);
+          }
+        } catch (error) {
+          console.error('Error during WebApp initialization:', error);
+          setIsTelegramAvailable(false);
+        }
+      } else if (initAttempts < MAX_ATTEMPTS) {
+        initAttempts++;
+        setTimeout(initializeTelegramWebApp, 500);
+      } else {
+        console.error('Telegram WebApp not available after maximum attempts');
+        setIsTelegramAvailable(false);
+      }
+    };
+
+    initializeTelegramWebApp();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const checkMembership = async () => {
-    const userId = window.Telegram?.WebApp.initDataUnsafe?.user?.id;
+    const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+    console.log('Attempting membership check with userId:', userId);
+    
     if (!userId) {
-      console.error('User ID not found');
-      return;
+      console.error('User ID not found - WebApp might not be properly initialized');
+      setHasJoinedChannel(false);
+      return false;
     }
 
     try {
@@ -50,13 +98,22 @@ export default function JoinChannelPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ 
+          userId,
+          initData: window.Telegram?.WebApp?.initDataUnsafe // Send full initData for debugging
+        }),
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       setHasJoinedChannel(data.isMember);
       return data.isMember;
     } catch (error) {
       console.error('Error verifying membership:', error);
+      setHasJoinedChannel(false);
       return false;
     }
   };
