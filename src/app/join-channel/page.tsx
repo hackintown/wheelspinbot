@@ -23,6 +23,7 @@ interface WindowWithTelegram extends Window {
 const JoinChannel: React.FC = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const getTelegramWebApp = () => {
     if (typeof window !== "undefined") {
@@ -56,26 +57,23 @@ const JoinChannel: React.FC = () => {
     }
 
     setIsLoading(true);
+    setErrorMessage("");
     try {
-      // Open the channel link
-      await tgWebApp.openTelegramLink('https://t.me/hackintown');
-      
-      // Get user ID from Telegram WebApp
       const userId = tgWebApp.initDataUnsafe?.user?.id;
       if (!userId) {
         throw new Error('User ID not found');
       }
 
-      // Verify channel membership
       const isMember = await verifyChannelMembership(userId);
-      if (isMember) {
-        router.push('/wheel-spin');
-      } else {
-        alert('Please join the channel to continue');
+      if (!isMember) {
+        setErrorMessage('Please join the channel to continue.');
+        return;
       }
+
+      await tgWebApp.openTelegramLink('https://t.me/hackintown');
+      router.push('/wheel-spin');
     } catch (error) {
-      console.error('Error:', error);
-      alert('Something went wrong. Please try again.');
+      setErrorMessage('Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -86,13 +84,16 @@ const JoinChannel: React.FC = () => {
       <div className="bg-white p-8 rounded-lg shadow-lg text-center">
         <h2 className="text-2xl font-bold mb-4">Join Our Channel</h2>
         <p className="mb-4">Join the channel and get 3 spins for free!</p>
+        
+        {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+
         <button
           onClick={handleJoinClick}
           disabled={isLoading}
           className={`bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 
             ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {isLoading ? 'Verifying...' : 'Join Channel'}
+          {isLoading ? 'Joining...' : 'Join Channel'}
         </button>
       </div>
     </div>

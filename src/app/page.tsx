@@ -8,8 +8,6 @@ export default function Home() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [hasJoinedChannel, setHasJoinedChannel] = useState(false);
-  const [spinsLeft, setSpinsLeft] = useState(3);
-  const [totalEarnings, setTotalEarnings] = useState(0);
   const [isTelegramAvailable, setIsTelegramAvailable] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -92,10 +90,6 @@ export default function Home() {
     }
   };
 
-  const handleSpinComplete = (amount: number) => {
-    setTotalEarnings(prev => prev + amount);
-    setSpinsLeft(prev => prev - 1);
-  };
 
   if (isLoading) {
     return (

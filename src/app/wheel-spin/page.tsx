@@ -28,7 +28,7 @@ export default function WheelSpinPage() {
     setTotalEarnings(prev => prev + amount);
     setSpinsLeft(prev => prev - 1);
     
-    if (spinsLeft <= 1) {
+    if (spinsLeft <= 0) {
       setShowInvite(true);
     }
     
