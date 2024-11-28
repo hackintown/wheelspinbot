@@ -84,7 +84,12 @@ export default function JoinChannelPage() {
 
   const checkMembership = async () => {
     const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-    console.log('Attempting membership check with userId:', userId);
+    const initData = window.Telegram?.WebApp?.initDataUnsafe;
+    
+    console.log('Checking membership with:', {
+      userId,
+      initData
+    });
     
     if (!userId) {
       console.error('User ID not found - WebApp might not be properly initialized');
@@ -100,15 +105,17 @@ export default function JoinChannelPage() {
         },
         body: JSON.stringify({ 
           userId,
-          initData: window.Telegram?.WebApp?.initDataUnsafe // Send full initData for debugging
+          initData 
         }),
       });
       
+      const data = await response.json();
+      console.log('Membership check response:', data);
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${data.error || 'Unknown error'}`);
       }
       
-      const data = await response.json();
       setHasJoinedChannel(data.isMember);
       return data.isMember;
     } catch (error) {
@@ -128,15 +135,29 @@ export default function JoinChannelPage() {
     try {
       // Open Telegram channel link
       await window.Telegram.WebApp.openTelegramLink('https://t.me/hackintown');
-      // Wait for user to potentially join
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      // Check if user has joined
-      const isMember = await checkMembership();
-      if (isMember) {
-        router.push('/wheel-spin');
+      
+      // Try verifying membership multiple times with delays
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        // Wait between attempts
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Check if user has joined
+        const isMember = await checkMembership();
+        if (isMember) {
+          router.push('/wheel-spin');
+          return;
+        }
+        attempts++;
       }
+      
+      // If we get here, membership verification failed
+      setHasJoinedChannel(false);
     } catch (error) {
       console.error("Error joining channel:", error);
+      setHasJoinedChannel(false);
     } finally {
       setIsLoading(false);
     }
