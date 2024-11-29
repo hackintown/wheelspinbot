@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
+import TelegramDebug from '@/components/TelegramDebug';
 
 interface TelegramWebApp {
   ready: () => void;
@@ -86,13 +87,14 @@ export default function JoinChannelPage() {
     const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
     const initData = window.Telegram?.WebApp?.initDataUnsafe;
     
-    console.log('Checking membership with:', {
+    console.log('Starting membership check:', {
       userId,
-      initData
+      initData,
+      telegramWebApp: !!window.Telegram?.WebApp
     });
     
     if (!userId) {
-      console.error('User ID not found - WebApp might not be properly initialized');
+      console.error('User ID not found');
       setHasJoinedChannel(false);
       return false;
     }
@@ -110,7 +112,7 @@ export default function JoinChannelPage() {
       });
       
       const data = await response.json();
-      console.log('Membership check response:', data);
+      console.log('Membership verification response:', data);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}, message: ${data.error || 'Unknown error'}`);
@@ -119,7 +121,7 @@ export default function JoinChannelPage() {
       setHasJoinedChannel(data.isMember);
       return data.isMember;
     } catch (error) {
-      console.error('Error verifying membership:', error);
+      console.error('Membership verification error:', error);
       setHasJoinedChannel(false);
       return false;
     }
@@ -190,6 +192,7 @@ export default function JoinChannelPage() {
           </p>
         )}
       </div>
+      {process.env.NODE_ENV === 'development' && <TelegramDebug />}
     </div>
   );
 }
