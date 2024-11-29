@@ -4,7 +4,10 @@ export function validateEnvironment() {
     'TELEGRAM_CHANNEL_ID',
     'MONGODB_URI',
     'NEXT_PUBLIC_BASE_URL',
-    'WEBHOOK_SECRET'
+    'WEBHOOK_SECRET',
+    'NEXT_PUBLIC_MAX_SPINS',
+    'NEXT_PUBLIC_MIN_REWARD',
+    'NEXT_PUBLIC_MAX_REWARD'
   ];
 
   const missing = required.filter(key => !process.env[key]);

@@ -6,10 +6,10 @@ export async function POST(req: NextRequest) {
   try {
     const { userId, amount } = await req.json();
     
-    if (amount < 100) {
+    if (!userId || amount < 100) {
       return NextResponse.json({ 
         success: false, 
-        message: "Minimum withdrawal amount is ₹100" 
+        error: "Invalid withdrawal request" 
       }, { status: 400 });
     }
 
@@ -19,25 +19,31 @@ export async function POST(req: NextRequest) {
     if (!user || user.totalEarnings < amount) {
       return NextResponse.json({ 
         success: false, 
-        message: "Insufficient balance" 
+        error: "Insufficient balance" 
       }, { status: 400 });
     }
 
-    // Process withdrawal logic here
-    // Update user balance
+    // Record withdrawal request
     await User.findOneAndUpdate(
       { telegramId: userId },
-      { $inc: { totalEarnings: -amount } }
+      { 
+        $inc: { totalEarnings: -amount },
+        $push: { 
+          withdrawals: {
+            amount,
+            timestamp: new Date(),
+            status: 'pending'
+          }
+        }
+      }
     );
 
-    return NextResponse.json({ 
-      success: true, 
-      message: "Withdrawal processed successfully" 
-    });
+    return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Withdrawal error:", error);
     return NextResponse.json({ 
       success: false, 
-      message: "Withdrawal failed" 
+      error: "Internal server error" 
     }, { status: 500 });
   }
 } 

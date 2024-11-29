@@ -6,6 +6,20 @@ const UserSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  hasJoinedChannel: {
+    type: Boolean,
+    default: false,
+  },
+  joinedAt: {
+    type: Date,
+  },
+  lastVerificationTime: {
+    type: Date,
+  },
+  verificationAttempts: {
+    type: Number,
+    default: 0,
+  },
   spinsLeft: {
     type: Number,
     default: 3,
@@ -13,19 +27,7 @@ const UserSchema = new mongoose.Schema({
   totalEarnings: {
     type: Number,
     default: 0,
-  },
-  hasJoinedChannel: {
-    type: Boolean,
-    default: false,
-  },
-  invitedUsers: [{
-    type: String,
-  }],
-  withdrawals: [{
-    amount: Number,
-    timestamp: Date,
-    status: String,
-  }],
+  }
 }, {
   timestamps: true,
 });
