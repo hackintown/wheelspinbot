@@ -21,6 +21,11 @@ const UserSchema = new mongoose.Schema({
   invitedUsers: [{
     type: String,
   }],
+  withdrawals: [{
+    amount: Number,
+    timestamp: Date,
+    status: String,
+  }],
 }, {
   timestamps: true,
 });

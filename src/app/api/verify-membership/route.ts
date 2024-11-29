@@ -5,12 +5,15 @@ import { User } from "@/models/User";
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, initData } = await request.json();
+    const { userId } = await request.json();
     
-    console.log('Received verification request:', {
-      userId,
-      initData
-    });
+    // Development mode always returns success
+    if (process.env.NODE_ENV === 'development') {
+      return NextResponse.json({ 
+        isMember: true,
+        status: 'member'
+      });
+    }
 
     // Ensure userId is provided in the request
     if (!userId) {

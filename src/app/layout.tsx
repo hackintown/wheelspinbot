@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import Script from 'next/script';
+import DevelopmentWrapper from '@/components/DevelopmentWrapper';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -39,7 +40,11 @@ export default function RootLayout({
           '--tg-viewport-stable-height': '100vh'
         } as React.CSSProperties}
       >
-        {children}
+        {process.env.NODE_ENV === 'development' ? (
+          <DevelopmentWrapper>{children}</DevelopmentWrapper>
+        ) : (
+          children
+        )}
       </body>
     </html>
   );
