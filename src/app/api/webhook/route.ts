@@ -5,16 +5,12 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    if (!process.env.BOT_TOKEN || !process.env.NEXT_PUBLIC_BASE_URL) {
-      throw new Error('Missing required environment variables');
-    }
-    // Check for /start command in incoming message
     if (body.message?.text === "/start") {
-      const webAppUrl = `${process.env.NEXT_PUBLIC_BASE_URL}`;
-      // Prepare data to send to Telegram API
-      const telegramMessage = {
+      const webAppUrl = process.env.NEXT_PUBLIC_WEBAPP_URL;
+
+      const message = {
         chat_id: body.message.chat.id,
-        text: "🎮 Welcome to Spin & Win!\n\nClick the button below to play and win exciting rewards!",
+        text: "🎮 Welcome to Spin & Win!\n\nGet ready to win exciting rewards! Click the button below to start playing.",
         reply_markup: {
           inline_keyboard: [
             [
@@ -26,24 +22,27 @@ export async function POST(request: NextRequest) {
           ],
         },
       };
-      // Send message to the user via the Telegram API
-      const response = await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(telegramMessage),
-      });
+
+      const response = await fetch(
+        `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(message),
+        }
+      );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Failed to send Telegram message: ${errorData.description || 'Unknown error'}`);
+        throw new Error("Failed to send Telegram message");
       }
     }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Webhook error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

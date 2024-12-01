@@ -1,9 +1,9 @@
 export function validateEnv() {
   const required = [
-    'BOT_TOKEN',
-    'TELEGRAM_CHANNEL_ID',
-    'MONGODB_URI',
-    'NEXT_PUBLIC_BASE_URL'
+    "TELEGRAM_BOT_TOKEN",
+    "TELEGRAM_CHANNEL_ID",
+    "MONGODB_URI",
+    "NEXT_PUBLIC_BASE_URL",
   ];
 
   for (const var_ of required) {
@@ -11,4 +11,4 @@ export function validateEnv() {
       throw new Error(`Missing required environment variable: ${var_}`);
     }
   }
-} 
+}

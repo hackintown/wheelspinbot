@@ -1,5 +1,5 @@
-import { User } from '@/models/User';
-import { connectToDatabase } from './mongodb';
+import { User } from "@/models/User";
+import { connectToDatabase } from "./mongodb";
 
 export class MembershipVerification {
   private static readonly MAX_VERIFICATION_ATTEMPTS = 3;
@@ -11,13 +11,13 @@ export class MembershipVerification {
     message?: string;
   }> {
     await connectToDatabase();
-    
+
     // Get or create user
     let user = await User.findOne({ telegramId: userId });
     if (!user) {
       user = await User.create({
         telegramId: userId,
-        verificationAttempts: 0
+        verificationAttempts: 0,
       });
     }
 
@@ -26,7 +26,7 @@ export class MembershipVerification {
       // Periodic re-verification (every 24 hours)
       const lastVerification = user.lastVerificationTime?.getTime() || 0;
       const needsRecheck = Date.now() - lastVerification > 24 * 60 * 60 * 1000;
-      
+
       if (!needsRecheck) {
         return { isMember: true, needsVerification: false };
       }
@@ -39,7 +39,7 @@ export class MembershipVerification {
         return {
           isMember: false,
           needsVerification: false,
-          message: 'Too many verification attempts. Please try again later.'
+          message: "Too many verification attempts. Please try again later.",
         };
       }
       // Reset attempts after timeout
@@ -51,7 +51,7 @@ export class MembershipVerification {
 
     // Verify current membership status
     const isMember = await this.checkTelegramMembership(userId);
-    
+
     // Update user record
     await User.updateOne(
       { telegramId: userId },
@@ -59,29 +59,35 @@ export class MembershipVerification {
         $set: {
           hasJoinedChannel: isMember,
           lastVerificationTime: new Date(),
-          ...(isMember && { joinedAt: new Date() })
+          ...(isMember && { joinedAt: new Date() }),
         },
-        $inc: { verificationAttempts: 1 }
+        $inc: { verificationAttempts: 1 },
       }
     );
 
     return {
       isMember,
       needsVerification: true,
-      message: isMember ? 'Membership verified' : 'User is not a channel member'
+      message: isMember
+        ? "Membership verified"
+        : "User is not a channel member",
     };
   }
 
-  private static async checkTelegramMembership(userId: string): Promise<boolean> {
+  private static async checkTelegramMembership(
+    userId: string
+  ): Promise<boolean> {
     try {
       const response = await fetch(
-        `https://api.telegram.org/bot${process.env.BOT_TOKEN}/getChatMember?chat_id=${process.env.TELEGRAM_CHANNEL_ID}&user_id=${userId}`
+        `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getChatMember?chat_id=${process.env.TELEGRAM_CHANNEL_ID}&user_id=${userId}`
       );
       const data = await response.json();
-      return ["member", "administrator", "creator"].includes(data.result?.status);
+      return ["member", "administrator", "creator"].includes(
+        data.result?.status
+      );
     } catch (error) {
-      console.error('Telegram API error:', error);
+      console.error("Telegram API error:", error);
       return false;
     }
   }
-} 
+}
