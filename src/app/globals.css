@@ -2,20 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+.clip-triangle {
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.1;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
 }
+
+@keyframes particle-float {
+  0% {
+    transform: rotate(var(--position)) translateX(120px) scale(0);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(var(--position)) translateX(200px) scale(0);
+    opacity: 0;
+  }
+}
+
+.particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: linear-gradient(to right, #f97316, #ec4899);
+  border-radius: 50%;
+  animation: particle-float 2s ease-out infinite;
+  animation-delay: var(--delay);
+}
+
+/* Custom styles for react-custom-roulette */
+.roulette-container {
+  position: relative !important;
+}
+
+.roulette-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/* Override default canvas size */
+.roulette-container > div {
+  width: 100% !important;
+  height: 100% !important;
+  padding-bottom: 100% !important;
+}
+
