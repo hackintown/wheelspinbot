@@ -11,6 +11,9 @@ export default {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
       },
+      animation: {
+        'spin-slow': 'spin 8s linear infinite',
+      },
     },
   },
   plugins: [],
